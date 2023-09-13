@@ -1,10 +1,12 @@
+import bodyParser from 'body-parser';
+import compression from 'compression';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import express from 'express';
 import http from 'http';
-import bodyParser from 'body-parser';
-import cookieParser from 'cookie-parser';
-import compression from 'compression';
-import cors from 'cors';
 import mongoose from 'mongoose';
+
+import router from './router';
 
 
 const app = express();
@@ -28,3 +30,5 @@ const mongoUrl = process.env.MONGO_URL || '';
 mongoose.Promise = Promise;
 mongoose.connect(mongoUrl);
 mongoose.connection.on('error', ( error: Error ) => console.error(error));
+
+app.use('/', router());
