@@ -1,7 +1,45 @@
 
 import express from 'express';
-import { random, autentication } from '../helpers';
-import { createUser,getUserByemail } from '../db/users';
+import { random, authentication } from '../helpers';
+import { createUser, getUserByemail } from '../db/users';
+
+
+export const login = async( req: express.Request, res: express.Response ) => {
+
+    try{
+        const { email, password } = req.body;
+
+        if(!email || !password){
+            return res.sendStatus(400);
+        }
+
+        const user = await getUserByemail(email).select('+authentication.salt +authentication.password');
+
+        if(!user){
+            return res.sendStatus(400);
+        }
+
+        const expectedhash = authentication( user.authentication.salt, password );
+
+        if( user.authentication.password != expectedhash ) {
+            return res.sendStatus(403);
+        }
+
+        const salt = random();
+
+        user.authentication.sessionToken = authentication(salt, user._id.toString());
+
+        res.cookie('USER_AUTH', user.authentication.sessionToken, { domain: 'localhost', path:'/' });
+
+        return res.status(200).json(user).end();
+
+    }catch(e){
+        console.error(e);
+        return res.sendStatus(400);
+    }
+
+}
+
 
 
 
@@ -22,7 +60,7 @@ export const register = async ( req: express.Request, res: express.Response ) =>
             username,
             authentication : {
                 salt,
-                password: autentication(salt,password),
+                password: authentication(salt,password),
             },
         });
 
